@@ -14,7 +14,22 @@ const PORT = process.env.PORT || 5001;
 const storage = multer.memoryStorage(); // Store files in memory
 const upload = multer({ storage });
 
-app.use(cors());
+// CORS configuration
+const whitelist = process.env.WHITELISTED_DOMAINS.split(",");
+const corsOptions =
+  process.env.NODE_ENV === "production"
+    ? {
+        origin: function (origin, callback) {
+          if (whitelist.indexOf(origin) !== -1 || !origin) {
+            callback(null, true); // Allow requests from whitelisted domains or requests with no origin (e.g., server-side requests)
+          } else {
+            callback(new Error("Not allowed by CORS"));
+          }
+        },
+      }
+    : undefined;
+
+app.use(cors(corsOptions));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(express.static(path.join(__dirname, "public")));
