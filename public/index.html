@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Image Upload</title>
+</head>
+<body>
+  <h1>Image Upload</h1>
+  
+  <form id="uploadForm" enctype="multipart/form-data">
+    <input type="file" name="file" id="fileInput" accept="image/*" required>
+    <input type="text" name="folderName" id="folderName" placeholder="Folder Name (optional)">
+    <button type="submit">Upload Image</button>
+  </form>
+
+  <div id="previewContainer" style="display: none;">
+    <h2>Preview</h2>
+    <img id="previewImage" src="#" alt="Uploaded Image">
+  </div>
+
+  <div id="message"></div>
+
+  <script>
+    document.getElementById('uploadForm').addEventListener('submit', async function(event) {
+      event.preventDefault();
+      
+      const fileInput = document.getElementById('fileInput');
+      const folderName = document.getElementById('folderName').value;
+
+      const formData = new FormData();
+      formData.append('file', fileInput.files[0]);
+      formData.append('folderName', folderName);
+
+      try {
+        const response = await fetch('/upload/single', {
+          method: 'POST',
+          body: formData
+        });
+        
+        const responseData = await response.json();
+
+        if (response.ok) {
+          document.getElementById('message').textContent = responseData.message;
+          
+          // Display uploaded image preview
+          const previewContainer = document.getElementById('previewContainer');
+          const previewImage = document.getElementById('previewImage');
+          previewImage.src = responseData.imageUrl;
+          previewContainer.style.display = 'block';
+        } else {
+          document.getElementById('message').textContent = 'Error: ' + responseData.error;
+        }
+      } catch (error) {
+        console.error('Error:', error);
+        document.getElementById('message').textContent = 'Internal server error';
+      }
+    });
+  </script>
+</body>
+</html>
