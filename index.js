@@ -3,7 +3,7 @@ const express = require("express");
 const cors = require("cors");
 const path = require("path");
 const multer = require("multer");
-const sharp = require("sharp");
+const Jimp = require("jimp");
 const { v4: uuidv4 } = require("uuid");
 const { uploadToS3 } = require("./connection.aws");
 const app = express();
@@ -46,14 +46,15 @@ app.post("/upload/single", upload.single("file"), async (req, res) => {
         case "image/jpeg":
         case "image/jpg":
         case "image/png":
-          // Compress the uploaded image
+          // Compress the uploaded image using Jimp
           if (
             process.env.COMPRESS_IMAGE === "true" &&
             parseInt(process.env.COMPRESS_IMAGE_QUALITY)
-          )
-            compressedImageBuffer = await sharp(req.file.buffer)
-              .jpeg({ quality: parseInt(process.env.COMPRESS_IMAGE_QUALITY) }) // Adjust quality as needed
-              .toBuffer();
+          ) {
+            const image = await Jimp.read(req.file.buffer);
+            image.quality(parseInt(process.env.COMPRESS_IMAGE_QUALITY)); // Adjust quality as needed
+            compressedImageBuffer = await image.getBufferAsync(Jimp.MIME_JPEG);
+          }
 
           // Generate a unique file name for the compressed image
           fileName = `${uuidv4()}.jpg`; // Save as jpg
